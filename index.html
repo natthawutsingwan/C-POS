@@ -8,11 +8,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Sarabun', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* UI Decorations */
         .glass-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); }
         .product-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
         .product-card:active { transform: scale(0.92); }
         .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+        ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body class="h-full bg-[#F8FAFC]">
@@ -23,20 +26,18 @@
                 <h1 class="text-2xl font-black text-orange-600 tracking-tighter italic">CHICK CHICK</h1>
                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Self-Service Order</p>
             </div>
-            <div class="bg-orange-50 text-orange-600 px-4 py-1 rounded-full text-xs font-black">TABLE 05</div>
+            <div class="bg-orange-50 text-orange-600 px-4 py-1 rounded-full text-xs font-black italic">TABLE 05</div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-5 pb-32">
-            <div id="customer-menu" class="grid grid-cols-2 gap-4">
-                <div class="col-span-2 py-10 text-center text-slate-400">กำลังโหลดความอร่อย...</div>
-            </div>
+        <main id="customer-menu" class="flex-1 overflow-y-auto p-5 pb-32 grid grid-cols-2 gap-4">
+            <div class="col-span-2 py-10 text-center text-slate-400">กำลังโหลดเมนู...</div>
         </main>
 
         <div id="bottom-cart" class="fixed bottom-0 left-0 right-0 p-6 z-50 transform translate-y-full transition-transform duration-500">
             <button onclick="openOrderSummary()" class="w-full bg-slate-900 text-white p-5 rounded-[2.5rem] flex justify-between items-center shadow-2xl active:scale-95 transition-all">
                 <div class="flex items-center gap-4">
-                    <div id="cart-count" class="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ring-4 ring-slate-800">0</div>
-                    <span class="font-bold text-lg text-orange-50">ดูรายการที่สั่ง</span>
+                    <div id="cart-count" class="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">0</div>
+                    <span class="font-bold text-lg">ดูรายการ</span>
                 </div>
                 <span id="cart-total" class="font-black text-2xl tracking-tighter">฿0</span>
             </button>
@@ -44,49 +45,32 @@
 
         <div id="order-overlay" class="fixed inset-0 bg-white z-[60] transform translate-y-full transition-transform duration-500 overflow-y-auto">
             <div class="p-8 max-w-xl mx-auto">
-                <div class="flex justify-between items-center mb-10">
-                    <button onclick="closeOrderSummary()" class="w-12 h-12 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 font-bold text-xl">✕</button>
-                    <h2 class="text-2xl font-black text-slate-800 tracking-tighter">ตะกร้าของคุณ</h2>
+                <div class="flex justify-between items-center mb-8">
+                    <button onclick="closeOrderSummary()" class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold">✕</button>
+                    <h2 class="text-2xl font-black text-slate-800">ยืนยันรายการอาหาร</h2>
                     <div class="w-12"></div>
                 </div>
                 <div id="order-items" class="space-y-4 mb-10"></div>
                 <div class="bg-slate-50 p-8 rounded-[2.5rem] mb-10">
                     <div class="flex justify-between font-black text-3xl text-slate-800">
-                        <span>ยอดชำระ</span>
+                        <span>ยอดรวม</span>
                         <span id="summary-total" class="text-orange-600">฿0</span>
                     </div>
                 </div>
-                <button onclick="openPaymentModal()" class="w-full bg-orange-600 text-white py-6 rounded-[2.5rem] font-black text-2xl shadow-xl shadow-orange-100 active:scale-95 transition-all">
-                    ไปที่หน้าชำระเงิน
+                <button onclick="processOrder(this)" id="confirm-btn" class="w-full bg-orange-600 text-white py-6 rounded-[2.5rem] font-black text-2xl shadow-xl active:scale-95 transition-all">
+                    ยืนยันการสั่งซื้อ
                 </button>
             </div>
         </div>
 
-        <div id="payment-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
-            <div class="bg-white rounded-[3rem] shadow-2xl w-full max-w-sm p-8 text-center pop-in">
-                <h3 class="text-xl font-black text-slate-800 mb-2">ชำระเงินผ่าน PromptPay</h3>
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">Scan QR to Complete Order</p>
-                <div class="bg-white p-4 rounded-[2.5rem] border-2 border-slate-100 mb-6 shadow-inner">
-                    <img id="qr-display-image" src="" class="mx-auto w-full max-w-[220px]">
-                    <p id="payment-amount" class="text-4xl font-black text-slate-900 mt-4 tracking-tighter">฿0</p>
-                </div>
-                <div class="space-y-3">
-                    <button onclick="processOrder()" id="confirm-payment-btn" class="w-full py-5 bg-orange-600 text-white rounded-[2rem] font-bold text-xl shadow-lg active:scale-95 transition-all">
-                        โอนแล้ว พิมพ์ใบเสร็จเลย
-                    </button>
-                    <button onclick="closePaymentModal()" class="text-slate-400 font-bold text-sm">ย้อนกลับ</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="success-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] hidden flex items-center justify-center p-6">
-            <div class="bg-white rounded-[3.5rem] p-12 w-full max-w-sm text-center shadow-2xl pop-in border-4 border-orange-500">
-                <div class="w-24 h-24 bg-emerald-500 text-white rounded-full flex items-center justify-center text-5xl mx-auto mb-8 shadow-lg shadow-emerald-100">✓</div>
-                <h3 class="text-3xl font-black text-slate-800 mb-2">สั่งสำเร็จ!</h3>
-                <p class="text-slate-500 mb-8 font-medium italic">กรุณารับใบคิวและรอพนักงานเรียก</p>
-                <div class="bg-slate-900 rounded-[2.5rem] p-8">
-                    <p class="text-[10px] text-orange-400 font-black uppercase tracking-[0.2em] mb-2">QUEUE NO.</p>
-                    <h2 id="popup-queue-no" class="text-7xl font-black text-white tracking-tighter">----</h2>
+        <div id="success-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] hidden flex items-center justify-center p-6 text-center">
+            <div class="bg-white rounded-[3.5rem] p-12 w-full max-w-sm pop-in">
+                <div class="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center text-4xl mx-auto mb-6">✓</div>
+                <h3 class="text-3xl font-black mb-2 text-slate-800">สั่งสำเร็จ!</h3>
+                <p class="text-slate-500 mb-8 italic">กรุณารับใบเสร็จและรอเรียกคิวค่ะ</p>
+                <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl">
+                    <p class="text-[10px] text-orange-400 font-black mb-2 tracking-[0.2em]">QUEUE NO.</p>
+                    <h2 id="popup-queue-no" class="text-7xl font-black tracking-tighter">----</h2>
                 </div>
             </div>
         </div>
@@ -94,7 +78,6 @@
 
 <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbztypqVeKdZHc6MBDBjP-S8G3ZtObFgUcWkJxcgU-ElsQyupKSBu-yz9TZ3V93W5VFM/exec';
-    const PROMPTPAY_ID = '0646793964';
     let products = [], cart = [];
 
     async function loadMenu() {
@@ -105,17 +88,15 @@
                 products = result.data.filter(p => p.status === 'active');
                 renderMenu();
             }
-        } catch(e) { console.error("Load failed"); }
+        } catch(e) { console.error("Load error"); }
     }
 
     function renderMenu() {
         document.getElementById('customer-menu').innerHTML = products.map(p => `
-            <div class="product-card bg-white rounded-[2.5rem] p-2 shadow-sm border border-slate-50" onclick="addToCart('${p.id}')">
-                <div class="aspect-square bg-slate-100 rounded-[2rem] mb-3 overflow-hidden">
-                    <img src="${p.image || ''}" class="w-full h-full object-cover">
-                </div>
-                <div class="px-3 pb-3 text-center">
-                    <h4 class="font-bold text-slate-800 text-xs truncate">${p.name}</h4>
+            <div class="product-card bg-white rounded-[2rem] p-2 shadow-sm" onclick="addToCart('${p.id}')">
+                <img src="${p.image || ''}" class="w-full aspect-square object-cover rounded-[1.5rem] mb-2">
+                <div class="px-2 pb-2 text-center">
+                    <p class="font-bold text-slate-800 text-xs truncate">${p.name}</p>
                     <p class="text-orange-600 font-black text-lg">฿${parseFloat(p.price).toLocaleString()}</p>
                 </div>
             </div>
@@ -130,29 +111,26 @@
     }
 
     function updateCartUI() {
-        const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const count = cart.reduce((sum, item) => sum + item.qty, 0);
-        const nav = document.getElementById('bottom-cart');
-        nav.classList.toggle('translate-y-full', count === 0);
+        const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+        const count = cart.reduce((sum, i) => sum + i.qty, 0);
+        document.getElementById('bottom-cart').classList.toggle('translate-y-full', count === 0);
         document.getElementById('cart-count').textContent = count;
         document.getElementById('cart-total').textContent = `฿${total.toLocaleString()}`;
     }
 
     function openOrderSummary() {
         document.getElementById('order-items').innerHTML = cart.map(i => `
-            <div class="flex items-center gap-5 bg-slate-50 p-4 rounded-[2rem]">
-                <div class="flex-1 min-w-0 px-2">
-                    <p class="font-bold text-slate-800 truncate">${i.name}</p>
-                    <p class="text-orange-600 font-black text-sm">฿${i.price}</p>
-                </div>
-                <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-2xl shadow-sm">
-                    <button onclick="changeQty('${i.productId}', -1)" class="font-black text-slate-300">-</button>
-                    <span class="font-black text-slate-800">${i.qty}</span>
-                    <button onclick="changeQty('${i.productId}', 1)" class="font-black text-orange-500">+</button>
+            <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl font-bold">
+                <div class="flex-1 truncate">${i.name}</div>
+                <div class="flex items-center gap-3 bg-white px-3 py-1 rounded-lg">
+                    <button onclick="changeQty('${i.productId}', -1)" class="text-slate-300">-</button>
+                    <span>${i.qty}</span>
+                    <button onclick="changeQty('${i.productId}', 1)" class="text-orange-500">+</button>
                 </div>
             </div>
         `).join('');
-        document.getElementById('summary-total').textContent = `฿${cart.reduce((s, i) => s + (i.price * i.qty), 0).toLocaleString()}`;
+        const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+        document.getElementById('summary-total').textContent = `฿${total.toLocaleString()}`;
         document.getElementById('order-overlay').classList.remove('translate-y-full');
     }
 
@@ -163,54 +141,53 @@
         if (cart.length === 0) closeOrderSummary(); else openOrderSummary();
     }
 
-    function openPaymentModal() {
-        const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
-        document.getElementById('payment-amount').textContent = `฿${total.toLocaleString()}`;
-        document.getElementById('qr-display-image').src = `https://promptpay.io/${PROMPTPAY_ID}/${total}.png`;
-        document.getElementById('payment-modal').classList.remove('hidden');
-    }
-
-    function closePaymentModal() { document.getElementById('payment-modal').classList.add('hidden'); }
     function closeOrderSummary() { document.getElementById('order-overlay').classList.add('translate-y-full'); }
 
-    // 🚀 ระบบพิมพ์อัตโนมัติแบบแอป POS (ผ่านแอป RawBT)
-    function processOrder() {
-        const btn = document.getElementById('confirm-payment-btn');
+    // 🚀 ระบบ Auto-Print ผ่าน RawBT (Android)
+    async function processOrder(btn) {
         btn.disabled = true;
-        btn.innerText = "กำลังสั่งพิมพ์...";
+        btn.innerText = "กำลังพิมพ์ใบเสร็จ...";
 
         const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
         const queueNo = Math.floor(Math.random() * 900 + 1).toString().padStart(3, '0');
 
-        // สร้างข้อมูลสั่งพิมพ์ภาษาเครื่อง (Esc/Pos) แบบ Text
-        let printText = `ESC@\x1Ba\x01\x1B!\x30CHICK CHICK\x1B!\x00\n\n`;
-        printText += `\x1Ba\x01QUE NO: \x1B!\x30${queueNo}\x1B!\x00\n`;
+        // 1. สร้างภาษาเครื่องพิมพ์ (ESC/POS)
+        let printText = `ESC@`; // Reset
+        printText += `\x1Ba\x01\x1B!\x30CHICK CHICK\n\n`; // ชื่อร้านตัวใหญ่
+        printText += `\x1Ba\x01\x1B!\x00คิวที่ / QUEUE\n`;
+        printText += `\x1Ba\x01\x1B!\x30${queueNo}\n\n`; // เลขคิวตัวใหญ่
+        printText += `\x1Ba\x00\x1B!\x00`; // กลับมาตัวปกติ
         printText += `--------------------------------\n`;
         cart.forEach(i => {
-            printText += `${i.name} x${i.qty}\n`;
+            printText += `${(i.name + " x" + i.qty).padEnd(25)} ${i.price*i.qty}\n`;
         });
         printText += `--------------------------------\n`;
-        printText += `TOTAL: ${total} THB\n\n`;
-        printText += `ขอบคุณที่อุดหนุน\n\n\n\n\x1DV\x41\x03`; // ตัดกระดาษ
+        printText += `TOTAL: ${total.toLocaleString()} THB\n`;
+        printText += `DATE: ${new Date().toLocaleString('th-TH')}\n\n`;
+        printText += `\x1Ba\x01ขอบคุณที่อุดหนุนค่ะ\n\n\n\n\n`;
+        printText += `\x1DV\x41\x03`; // คำสั่งตัดกระดาษ
 
-        // 🚀 สั่งพิมพ์ผ่านแอป RawBT (Intent URL)
-        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(printText)));
+        // 2. ส่งไปแอป RawBT ทันที
+        const base64Data = btoa(unescape(encodeURIComponent(printText)));
+        window.location.href = "rawbt:base64," + base64Data;
 
-        // แสดงผลสำเร็จบนหน้าจอ
-        setTimeout(() => {
-            document.getElementById('payment-modal').classList.add('hidden');
-            document.getElementById('popup-queue-no').innerText = queueNo;
-            document.getElementById('success-popup').classList.remove('hidden');
+        // 3. แสดงคิวบนหน้าจอ
+        document.getElementById('popup-queue-no').innerText = queueNo;
+        document.getElementById('success-popup').classList.remove('hidden');
 
-            // บันทึกลงระบบ
-            fetch(API_URL, { 
+        // 4. บันทึกลง Google Sheets
+        try {
+            await fetch(API_URL, { 
                 method: 'POST', 
                 mode: 'no-cors', 
-                body: JSON.stringify({ action: 'addSale', items: cart, total: total, orderType: 'QR-' + queueNo }) 
+                body: JSON.stringify({ 
+                    action: 'addSale', items: cart, total: total, orderType: 'AUTO-' + queueNo 
+                }) 
             });
+        } catch (e) { console.error("Save error"); }
 
-            setTimeout(() => { location.reload(); }, 4000);
-        }, 500);
+        // รีเซ็ตหน้าใหม่
+        setTimeout(() => { location.reload(); }, 4000);
     }
 
     window.onload = loadMenu;
